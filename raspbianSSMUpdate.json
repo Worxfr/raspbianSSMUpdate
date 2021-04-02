@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Apt Upgrade Script",
+  "parameters": {
+    "RebootOption": {
+      "type": "String",
+      "description": "ToDO(Optional) Reboot behavior after a patch Install operation.",
+      "allowedValues": [
+        "Reboot",
+        "NoReboot"
+      ],
+      "default": "Reboot"
+    }
+  },
+  "mainSteps": [
+    {
+      "precondition": {
+        "StringEquals": [
+          "platformType",
+          "Linux"
+        ]
+      },
+      "action": "aws:runShellScript",
+      "name": "PatchLinux",
+      "inputs": {
+        "timeoutSeconds": 7200,
+        "runCommand": [
+          "#!/usr/bin/env python",
+          "# aptinstall.py",
+          "import apt",
+          "import sys",
+          "cache = apt.cache.Cache()",
+          "cache.update()",
+          "cache.open()",
+          "cache.upgrade()",
+          "try:",
+          "    cache.commit()",
+          "except Exception, arg:",
+          "    print >> sys.stderr, 'Sorry, error'.format(err=str(arg))"
+        ]
+      }
+    },
+    {
+      "precondition": {
+        "StringEquals": [
+          "'{{RebootOption}}'",
+          "'Reboot'"
+        ]
+      },
+      "action": "aws:runShellScript",
+      "name": "RebootLinux",
+      "inputs": {
+        "timeoutSeconds": 7200,
+        "runCommand": [
+          "#!/usr/bin/env python",
+          "# reboot.py",
+          "import os",
+          "import sys",
+          "try:",
+          "    if '{{RebootOption}}' == 'Reboot': os.system('reboot')",
+          "except Exception, arg:",
+          "    print >> sys.stderr, 'Sorry, error'.format(err=str(arg))"
+        ]
+      }
+    }
+  ]
+}
